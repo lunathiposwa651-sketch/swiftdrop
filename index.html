@@ -4,147 +4,85 @@
 <title>Swiftdrop Couriers</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
 <style>
 body {
   font-family: Arial;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: #0f172a;
   color: white;
   text-align: center;
-  margin: 0;
 }
-
-.header {
-  padding: 30px 20px;
-}
-
-h1 {
-  font-size: 28px;
-  color: #22c55e;
-}
-
-.subtitle {
-  color: #cbd5f5;
-  margin-bottom: 20px;
-}
-
-.container {
-  padding: 15px;
-}
-
 .card {
   background: #1e293b;
+  margin: 15px;
   padding: 20px;
-  margin: 15px 0;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  border-radius: 15px;
 }
-
 button {
-  padding: 14px;
-  margin-top: 10px;
-  border: none;
-  background: #22c55e;
-  color: white;
-  border-radius: 10px;
-  width: 100%;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-button:hover {
-  background: #16a34a;
-}
-
-input, select {
   padding: 12px;
   margin-top: 10px;
   width: 100%;
-  border-radius: 10px;
+  background: #22c55e;
+  color: white;
   border: none;
-  font-size: 15px;
+  border-radius: 10px;
 }
-
-.whatsapp {
-  background: #25D366;
-}
-
-.result {
+input, select {
+  width: 100%;
+  padding: 10px;
   margin-top: 10px;
-  font-weight: bold;
-  color: #22c55e;
+}
+.list {
+  text-align: left;
+  font-size: 14px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <h1>🚚 Swiftdrop Couriers</h1>
-  <p class="subtitle">King William’s Town & East London</p>
+<h1>🚚 Swiftdrop Couriers</h1>
+<p>King William’s Town & East London</p>
 
-  <a href="https://wa.me/27836153310">
-    <button class="whatsapp">Chat on WhatsApp</button>
-  </a>
-</div>
-
-<div class="container">
+<a href="https://wa.me/27836153310">
+<button>Chat on WhatsApp</button>
+</a>
 
 <!-- TRACK -->
 <div class="card">
-  <h3>📦 Track Parcel</h3>
-  <input id="trackInput" placeholder="Enter Tracking Code">
-  <button onclick="trackParcel()">Track</button>
-  <p id="result" class="result"></p>
-</div>
-
-<!-- PRICE -->
-<div class="card">
-  <h3>💰 Price Calculator</h3>
-  <select id="distance">
-    <option value="50">0-5km (R50)</option>
-    <option value="80">5-10km (R80)</option>
-    <option value="120">10-20km (R120)</option>
-  </select>
-  <button onclick="calc()">Calculate</button>
-  <p id="price" class="result"></p>
-</div>
-
-<!-- BOOK -->
-<div class="card">
-  <h3>📲 Book Delivery</h3>
-  <input id="name" placeholder="Your Name">
-  <input id="pickup" placeholder="Pickup Location">
-  <input id="dropoff" placeholder="Dropoff Location">
-  <button onclick="sendBooking()">Request Pickup</button>
+<h3>Track Parcel</h3>
+<input id="trackInput" placeholder="Tracking Code">
+<button onclick="trackParcel()">Track</button>
+<p id="result"></p>
 </div>
 
 <!-- ADMIN -->
 <div class="card">
-  <h3>🔐 Admin Login</h3>
-  <input id="pass" placeholder="Password">
-  <button onclick="login()">Login</button>
+<h3>Admin Login</h3>
+<input id="pass" placeholder="Password">
+<button onclick="login()">Login</button>
 
-  <div id="admin" style="display:none;">
-    <input id="code" placeholder="Tracking Code">
-    <select id="status">
-      <option>Pending</option>
-      <option>Collected</option>
-      <option>In Transit</option>
-      <option>Out for Delivery</option>
-      <option>Delivered</option>
-    </select>
-    <button onclick="addParcel()">Save Parcel</button>
-  </div>
+<div id="admin" style="display:none;">
+
+<h3>Add Parcel</h3>
+<select id="status">
+<option>Pending</option>
+<option>Collected</option>
+<option>In Transit</option>
+<option>Out for Delivery</option>
+<option>Delivered</option>
+</select>
+<button onclick="addParcel()">Generate & Save</button>
+
+<h3>All Parcels</h3>
+<div id="parcelList" class="list"></div>
+
 </div>
-
 </div>
 
 <script>
-// FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAQxGxPLT647onTJtLdMUSuRJ0l61ZF2n0",
   authDomain: "swiftdrop-a8ea5.firebaseapp.com",
@@ -161,21 +99,29 @@ const db = firebase.firestore();
 function login() {
   if(document.getElementById("pass").value === "1234"){
     document.getElementById("admin").style.display = "block";
+    loadParcels();
   } else {
     alert("Wrong password");
   }
 }
 
-// SAVE PARCEL
+// AUTO CODE GENERATOR
+function generateCode() {
+  return "SW" + Math.floor(1000 + Math.random() * 9000);
+}
+
+// ADD PARCEL
 function addParcel() {
-  let code = document.getElementById("code").value;
+  let code = generateCode();
   let status = document.getElementById("status").value;
 
   db.collection("parcels").doc(code).set({
-    status: status
+    status: status,
+    time: new Date().toLocaleString()
   });
 
-  alert("Saved online!");
+  alert("Created: " + code);
+  loadParcels();
 }
 
 // TRACK
@@ -184,29 +130,23 @@ function trackParcel() {
 
   db.collection("parcels").doc(code).get().then(doc => {
     if(doc.exists){
-      document.getElementById("result").innerText = doc.data().status;
+      document.getElementById("result").innerText =
+        doc.data().status + " (" + doc.data().time + ")";
     } else {
       document.getElementById("result").innerText = "Not found";
     }
   });
 }
 
-// PRICE
-function calc() {
-  let price = document.getElementById("distance").value;
-  document.getElementById("price").innerText = "Price: R" + price;
-}
-
-// BOOKING
-function sendBooking() {
-  let name = document.getElementById("name").value;
-  let pickup = document.getElementById("pickup").value;
-  let dropoff = document.getElementById("dropoff").value;
-
-  let message = `New Delivery:%0AName: ${name}%0APickup: ${pickup}%0ADropoff: ${dropoff}`;
-  window.open(`https://wa.me/27836153310?text=${message}`);
+// LOAD ALL PARCELS
+function loadParcels() {
+  db.collection("parcels").get().then(snapshot => {
+    let list = "";
+    snapshot.forEach(doc => {
+      let data = doc.data();
+      list += `<p><b>${doc.id}</b> - ${data.status} (${data.time})</p>`;
+    });
+    document.getElementById("parcelList").innerHTML = list;
+  });
 }
 </script>
-
-</body>
-</html>
