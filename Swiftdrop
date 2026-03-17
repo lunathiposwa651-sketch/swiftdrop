@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SwiftDrop Couriers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body style="font-family: Arial; text-align:center; padding:20px;">
+
+<h1>SwiftDrop Couriers</h1>
+<p>King William’s Town & East London</p>
+
+<a href="https://wa.me/27836153310">
+<button style="padding:10px; background:green; color:white;">
+WhatsApp Us
+</button>
+</a>
+
+<h2>Track Parcel</h2>
+<input placeholder="Enter Tracking ID"/>
+
+<p>(Tracking system coming next)</p>
+
+</body>
+</html>
