@@ -4,6 +4,10 @@
 <title>Swiftdrop Couriers</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
 <style>
 body {
   font-family: Arial;
@@ -11,22 +15,13 @@ body {
   color: white;
   text-align: center;
 }
-
-.container {
-  padding: 20px;
-}
-
-h1 {
-  color: #22c55e;
-}
-
+.container { padding: 20px; }
 .card {
   background: #1e293b;
   padding: 20px;
   margin: 15px;
   border-radius: 12px;
 }
-
 button {
   padding: 12px;
   margin: 10px;
@@ -34,15 +29,11 @@ button {
   background: #22c55e;
   color: white;
   border-radius: 8px;
-  font-weight: bold;
 }
-
 input, select {
   padding: 10px;
   margin: 10px;
   width: 90%;
-  border-radius: 6px;
-  border: none;
 }
 </style>
 </head>
@@ -58,104 +49,81 @@ input, select {
 <button>Chat on WhatsApp</button>
 </a>
 
-<!-- TRACKING -->
+<!-- TRACK -->
 <div class="card">
 <h3>Track Parcel</h3>
-<input id="trackInput" placeholder="Enter Tracking Number">
+<input id="trackInput" placeholder="Tracking Code">
 <button onclick="trackParcel()">Track</button>
 <p id="result"></p>
 </div>
 
-<!-- PRICING -->
-<div class="card">
-<h3>Price Calculator</h3>
-<select id="distance">
-<option value="50">0-5km (R50)</option>
-<option value="80">5-10km (R80)</option>
-<option value="120">10-20km (R120)</option>
-</select>
-<button onclick="calc()">Calculate</button>
-<p id="price"></p>
-</div>
-
-<!-- BOOKING -->
-<div class="card">
-<h3>Book a Delivery</h3>
-<input id="name" placeholder="Your Name">
-<input id="pickup" placeholder="Pickup Location">
-<input id="dropoff" placeholder="Dropoff Location">
-<button onclick="sendBooking()">Request Pickup</button>
-</div>
-
-<!-- ADMIN LOGIN -->
+<!-- ADMIN -->
 <div class="card">
 <h3>Admin Login</h3>
-<input id="adminPass" placeholder="Enter Password">
+<input id="pass" placeholder="Password">
 <button onclick="login()">Login</button>
 
-<div id="adminPanel" style="display:none;">
-<h3>Admin Panel</h3>
-<input id="newCode" placeholder="Tracking Code (e.g SW200)">
-<select id="newStatus">
+<div id="admin" style="display:none;">
+<input id="code" placeholder="Tracking Code">
+<select id="status">
 <option>Pending</option>
 <option>Collected</option>
 <option>In Transit</option>
 <option>Out for Delivery</option>
 <option>Delivered</option>
 </select>
-<button onclick="addParcel()">Add Parcel</button>
+<button onclick="addParcel()">Save Parcel</button>
 </div>
 </div>
 
 </div>
 
 <script>
-
-let parcels = JSON.parse(localStorage.getItem("parcels")) || {
-  "SW123": "Pending"
+// YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyAQxGxPLT647onTJtLdMUSuRJ0l61ZF2n0",
+  authDomain: "swiftdrop-a8ea5.firebaseapp.com",
+  projectId: "swiftdrop-a8ea5",
+  storageBucket: "swiftdrop-a8ea5.firebasestorage.app",
+  messagingSenderId: "333632152751",
+  appId: "1:333632152751:web:c1d8ec1d0a4ef68ba8e05a"
 };
 
-function trackParcel() {
-  let code = document.getElementById("trackInput").value;
-  let result = parcels[code] || "Tracking number not found";
-  document.getElementById("result").innerText = result;
-}
+// INIT FIREBASE
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-function calc() {
-  let price = document.getElementById("distance").value;
-  document.getElementById("price").innerText = "Price: R" + price;
-}
-
-function addParcel() {
-  let code = document.getElementById("newCode").value;
-  let status = document.getElementById("newStatus").value;
-
-  parcels[code] = status;
-  localStorage.setItem("parcels", JSON.stringify(parcels));
-
-  alert("Parcel Added!");
-}
-
-function sendBooking() {
-  let name = document.getElementById("name").value;
-  let pickup = document.getElementById("pickup").value;
-  let dropoff = document.getElementById("dropoff").value;
-
-  let message = `New Delivery Request:%0AName: ${name}%0APickup: ${pickup}%0ADropoff: ${dropoff}`;
-
-  window.open(`https://wa.me/27836153310?text=${message}`);
-}
-
+// LOGIN
 function login() {
-  let pass = document.getElementById("adminPass").value;
-
-  if(pass === "1234") {
-    document.getElementById("adminPanel").style.display = "block";
-  } else {
-    alert("Wrong password");
+  if(document.getElementById("pass").value === "1234"){
+    document.getElementById("admin").style.display = "block";
   }
 }
 
+// ADD PARCEL (SAVE ONLINE)
+function addParcel() {
+  let code = document.getElementById("code").value;
+  let status = document.getElementById("status").value;
+
+  db.collection("parcels").doc(code).set({
+    status: status
+  });
+
+  alert("Saved online!");
+}
+
+// TRACK PARCEL (GET ONLINE)
+function trackParcel() {
+  let code = document.getElementById("trackInput").value;
+
+  db.collection("parcels").doc(code).get().then(doc => {
+    if(doc.exists){
+      document.getElementById("result").innerText = doc.data().status;
+    } else {
+      document.getElementById("result").innerText = "Not found";
+    }
+  });
+}
 </script>
 
 </body>
