@@ -87,8 +87,13 @@ input, select {
 <button onclick="sendBooking()">Request Pickup</button>
 </div>
 
-<!-- ADMIN -->
+<!-- ADMIN LOGIN -->
 <div class="card">
+<h3>Admin Login</h3>
+<input id="adminPass" placeholder="Enter Password">
+<button onclick="login()">Login</button>
+
+<div id="adminPanel" style="display:none;">
 <h3>Admin Panel</h3>
 <input id="newCode" placeholder="Tracking Code (e.g SW200)">
 <select id="newStatus">
@@ -100,14 +105,14 @@ input, select {
 </select>
 <button onclick="addParcel()">Add Parcel</button>
 </div>
+</div>
 
 </div>
 
 <script>
 
 let parcels = JSON.parse(localStorage.getItem("parcels")) || {
-  "SW123": "Pending",
-  "SW124": "Collected"
+  "SW123": "Pending"
 };
 
 function trackParcel() {
@@ -139,6 +144,16 @@ function sendBooking() {
   let message = `New Delivery Request:%0AName: ${name}%0APickup: ${pickup}%0ADropoff: ${dropoff}`;
 
   window.open(`https://wa.me/27836153310?text=${message}`);
+}
+
+function login() {
+  let pass = document.getElementById("adminPass").value;
+
+  if(pass === "1234") {
+    document.getElementById("adminPanel").style.display = "block";
+  } else {
+    alert("Wrong password");
+  }
 }
 
 </script>
