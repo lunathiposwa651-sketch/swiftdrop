@@ -11,40 +11,14 @@ body {
   background: #0f172a;
   color: white;
 }
-
-/* HEADER */
 .header {
   padding: 20px;
   background: #020617;
   text-align: center;
   font-size: 22px;
-  font-weight: bold;
 }
+.logo { color: #22c55e; }
 
-/* HERO */
-.hero {
-  padding: 40px 20px;
-  text-align: center;
-}
-.hero h1 {
-  font-size: 28px;
-}
-.hero p {
-  color: #94a3b8;
-}
-
-/* BUTTON */
-button {
-  padding: 12px;
-  margin-top: 10px;
-  width: 90%;
-  background: #22c55e;
-  color: white;
-  border: none;
-  border-radius: 10px;
-}
-
-/* CARD */
 .card {
   background: #1e293b;
   margin: 15px;
@@ -52,24 +26,20 @@ button {
   border-radius: 15px;
 }
 
-/* INPUT */
+button {
+  padding: 12px;
+  margin-top: 10px;
+  width: 100%;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
 input, select {
-  width: 90%;
+  width: 100%;
   padding: 10px;
   margin-top: 10px;
-}
-
-/* LOGO */
-.logo {
-  font-size: 26px;
-  color: #22c55e;
-}
-
-/* FOOTER */
-.footer {
-  text-align: center;
-  padding: 20px;
-  color: #94a3b8;
 }
 </style>
 </head>
@@ -80,77 +50,44 @@ input, select {
   <span class="logo">⚡ SwiftX Delivery</span>
 </div>
 
-<div class="hero">
-  <h1>Fast & Reliable Courier Service</h1>
-  <p>King William’s Town & East London</p>
-
-  <a href="https://wa.me/27836153310?text=Hello%20SwiftX%20Delivery,%20I%20need%20a%20pickup">
-    <button>📲 Book via WhatsApp</button>
-  </a>
-</div>
-
-<!-- SERVICES -->
+<!-- BOOKING FORM -->
 <div class="card">
-  <h3>Our Services</h3>
-  <p>🚚 Same-day delivery</p>
-  <p>📦 Parcel tracking</p>
-  <p>⚡ Fast local & intercity delivery</p>
+<h3>📦 Request a Pickup</h3>
+
+<input id="custName" placeholder="Your Name">
+<input id="custPhone" placeholder="Your Phone">
+<input id="pickup" placeholder="Pickup Location">
+<input id="dropoff" placeholder="Drop-off Location">
+
+<select id="parcelSize">
+<option>Small Parcel</option>
+<option>Medium Parcel</option>
+<option>Large Parcel</option>
+</select>
+
+<button onclick="sendBooking()">Request Pickup</button>
+
+<p id="bookingMsg"></p>
 </div>
 
 <!-- TRACK -->
 <div class="card">
-  <h3>Track Parcel</h3>
-  <input id="trackInput" placeholder="Enter Tracking Code">
-  <button onclick="trackParcel()">Track</button>
-  <p id="result"></p>
-</div>
-
-<!-- PRICING -->
-<div class="card">
-  <h3>Delivery Pricing</h3>
-
-  <select id="route">
-    <option value="50">KWT → East London (R50)</option>
-    <option value="50">East London → KWT (R50)</option>
-    <option value="30">Local Delivery (R30)</option>
-  </select>
-
-  <select id="size">
-    <option value="1">Small Parcel</option>
-    <option value="1.5">Medium Parcel</option>
-    <option value="2">Large Parcel</option>
-  </select>
-
-  <button onclick="calcPrice()">Calculate</button>
-  <p id="priceResult"></p>
+<h3>Track Parcel</h3>
+<input id="trackInput" placeholder="Tracking Code">
+<button onclick="trackParcel()">Track</button>
+<p id="result"></p>
 </div>
 
 <!-- ADMIN -->
 <div class="card">
-  <h3>Admin Login</h3>
-  <input id="pass" placeholder="Password">
-  <button onclick="login()">Login</button>
+<h3>Admin Login</h3>
+<input id="pass" placeholder="Password">
+<button onclick="login()">Login</button>
 
-  <div id="admin" style="display:none;">
-    <input id="name" placeholder="Customer Name">
-    <input id="phone" placeholder="Customer Phone">
-
-    <select id="status">
-      <option>Pending</option>
-      <option>Collected</option>
-      <option>In Transit</option>
-      <option>Out for Delivery</option>
-      <option>Delivered</option>
-    </select>
-
-    <button onclick="addParcel()">Create Parcel</button>
-
-    <div id="parcelList"></div>
-  </div>
+<div id="admin" style="display:none;">
+<h3>Bookings</h3>
+<div id="bookingList"></div>
 </div>
-
-<div class="footer">
-  © 2026 SwiftX Delivery
 </div>
 
 <script type="module">
@@ -169,59 +106,67 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-window.login = function() {
-  if(document.getElementById("pass").value === "1234"){
-    document.getElementById("admin").style.display = "block";
-    loadParcels();
-  }
-}
+// SEND BOOKING
+window.sendBooking = async function() {
+  let name = document.getElementById("custName").value;
+  let phone = document.getElementById("custPhone").value;
+  let pickup = document.getElementById("pickup").value;
+  let dropoff = document.getElementById("dropoff").value;
+  let size = document.getElementById("parcelSize").value;
 
-window.calcPrice = function() {
-  let route = document.getElementById("route").value;
-  let size = document.getElementById("size").value;
-  document.getElementById("priceResult").innerText = "Price: R" + (route * size);
-}
+  let id = "BK" + Math.floor(1000 + Math.random() * 9000);
 
-function generateCode() {
-  return "SX" + Math.floor(1000 + Math.random() * 9000);
-}
-
-window.addParcel = async function() {
-  let code = generateCode();
-  let status = document.getElementById("status").value;
-  let name = document.getElementById("name").value;
-  let phone = document.getElementById("phone").value;
-
-  await setDoc(doc(db, "parcels", code), {
-    status, name, phone,
+  await setDoc(doc(db, "bookings", id), {
+    name, phone, pickup, dropoff, size,
     time: new Date().toLocaleString()
   });
 
-  alert("Tracking Code: " + code);
-  loadParcels();
+  document.getElementById("bookingMsg").innerText =
+    "Request sent! We will contact you soon.";
+
+  // OPEN WHATSAPP WITH DETAILS
+  let msg = `New Booking:
+Name: ${name}
+Phone: ${phone}
+Pickup: ${pickup}
+Drop-off: ${dropoff}
+Size: ${size}`;
+
+  window.open(`https://wa.me/27836153310?text=${encodeURIComponent(msg)}`);
 }
 
+// LOGIN
+window.login = function() {
+  if(document.getElementById("pass").value === "1234"){
+    document.getElementById("admin").style.display = "block";
+    loadBookings();
+  }
+}
+
+// LOAD BOOKINGS
+async function loadBookings() {
+  const querySnapshot = await getDocs(collection(db, "bookings"));
+  let list = "";
+
+  querySnapshot.forEach(docItem => {
+    let d = docItem.data();
+    list += `<p><b>${docItem.id}</b> - ${d.name} (${d.pickup} → ${d.dropoff})</p>`;
+  });
+
+  document.getElementById("bookingList").innerHTML = list;
+}
+
+// TRACK
 window.trackParcel = async function() {
   let code = document.getElementById("trackInput").value;
   const docSnap = await getDoc(doc(db, "parcels", code));
 
   if (docSnap.exists()) {
     let d = docSnap.data();
-    document.getElementById("result").innerText =
-      d.status + " | " + d.name;
+    document.getElementById("result").innerText = d.status;
   } else {
     document.getElementById("result").innerText = "Not found";
   }
-}
-
-async function loadParcels() {
-  const querySnapshot = await getDocs(collection(db, "parcels"));
-  let list = "";
-  querySnapshot.forEach(docItem => {
-    let d = docItem.data();
-    list += `<p><b>${docItem.id}</b> - ${d.name} - ${d.status}</p>`;
-  });
-  document.getElementById("parcelList").innerHTML = list;
 }
 </script>
 
