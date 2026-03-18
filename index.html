@@ -6,88 +6,128 @@
 
 <style>
 body {
+  margin: 0;
   font-family: Arial;
   background: #0f172a;
   color: white;
-  text-align: center;
 }
+
+/* PAGES */
+.page {
+  display: none;
+  padding: 20px;
+}
+.active {
+  display: block;
+}
+
+/* NAVBAR */
+.nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #020617;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+}
+.nav button {
+  background: none;
+  color: white;
+  border: none;
+  font-size: 14px;
+}
+
+/* CARD */
 .card {
   background: #1e293b;
-  margin: 15px;
-  padding: 20px;
-  border-radius: 15px;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
 }
-button {
-  padding: 12px;
-  margin-top: 10px;
-  width: 100%;
-  background: #22c55e;
-  border: none;
-  border-radius: 10px;
-  color: white;
-}
+
+/* INPUT */
 input, select {
   width: 100%;
   padding: 10px;
   margin-top: 10px;
+}
+
+button.action {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #22c55e;
+  border: none;
+  border-radius: 10px;
+  color: white;
 }
 </style>
 </head>
 
 <body>
 
+<!-- HOME -->
+<div id="home" class="page active">
 <h2>⚡ SwiftX Delivery</h2>
 
-<!-- BOOKING -->
 <div class="card">
-<h3>📦 Request Pickup</h3>
+<h3>Request Pickup</h3>
 <input id="name" placeholder="Name">
 <input id="phone" placeholder="Phone">
-<input id="pickup" placeholder="Pickup">
-<input id="dropoff" placeholder="Drop-off">
+<input id="pickup" placeholder="Pickup Location">
+<input id="dropoff" placeholder="Drop-off Location">
 
-<button onclick="book()">Request</button>
+<button class="action" onclick="book()">Request</button>
 <p id="msg"></p>
+</div>
 </div>
 
 <!-- TRACK -->
-<div class="card">
+<div id="trackPage" class="page">
 <h3>Track Parcel</h3>
-<input id="track" placeholder="Tracking Code">
-<button onclick="track()">Track</button>
+<input id="trackInput">
+<button class="action" onclick="trackParcel()">Track</button>
 <p id="result"></p>
 </div>
 
 <!-- ADMIN -->
-<div class="card">
+<div id="adminPage" class="page">
 <h3>Admin</h3>
 <input id="adminPass" placeholder="Password">
-<button onclick="adminLogin()">Login</button>
+<button class="action" onclick="adminLogin()">Login</button>
 
 <div id="adminPanel" style="display:none;">
-<h4>Bookings</h4>
 <div id="adminList"></div>
 </div>
 </div>
 
 <!-- DRIVER -->
-<div class="card">
+<div id="driverPage" class="page">
 <h3>Driver Panel</h3>
 <input id="driverPass" placeholder="Driver Code">
-<button onclick="driverLogin()">Enter</button>
+<button class="action" onclick="driverLogin()">Enter</button>
 
 <div id="driverPanel" style="display:none;">
 <input id="parcelCode" placeholder="Tracking Code">
 
-<select id="driverStatus">
+<select id="status">
 <option>Collected</option>
 <option>In Transit</option>
 <option>Out for Delivery</option>
 <option>Delivered</option>
 </select>
 
-<button onclick="updateStatus()">Update Status</button>
+<button class="action" onclick="updateStatus()">Update</button>
 </div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('trackPage')">Track</button>
+<button onclick="showPage('adminPage')">Admin</button>
+<button onclick="showPage('driverPage')">Driver</button>
 </div>
 
 <script type="module">
@@ -103,7 +143,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// BOOKING
+// NAVIGATION
+window.showPage = function(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
+}
+
+// BOOK
 window.book = async function() {
   let id = "SX" + Math.floor(1000 + Math.random() * 9000);
 
@@ -119,13 +165,9 @@ window.book = async function() {
 }
 
 // TRACK
-window.track = async function() {
-  const docSnap = await getDoc(doc(db, "parcels", track.value));
-  if(docSnap.exists()){
-    result.innerText = docSnap.data().status;
-  } else {
-    result.innerText = "Not found";
-  }
+window.trackParcel = async function() {
+  const docSnap = await getDoc(doc(db, "parcels", trackInput.value));
+  result.innerText = docSnap.exists() ? docSnap.data().status : "Not found";
 }
 
 // ADMIN
@@ -156,9 +198,8 @@ window.driverLogin = function() {
 // UPDATE STATUS
 window.updateStatus = async function() {
   await updateDoc(doc(db, "parcels", parcelCode.value), {
-    status: driverStatus.value
+    status: status.value
   });
-
   alert("Updated!");
 }
 </script>
