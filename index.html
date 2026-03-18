@@ -31,6 +31,11 @@ input, select {
   padding: 10px;
   margin-top: 10px;
 }
+.price {
+  font-size: 18px;
+  margin-top: 10px;
+  color: #22c55e;
+}
 </style>
 </head>
 
@@ -43,6 +48,7 @@ input, select {
 <button>Chat on WhatsApp</button>
 </a>
 
+<!-- TRACK -->
 <div class="card">
 <h3>Track Parcel</h3>
 <input id="trackInput" placeholder="Tracking Code">
@@ -50,13 +56,38 @@ input, select {
 <p id="result"></p>
 </div>
 
+<!-- PRICING -->
+<div class="card">
+<h3>Delivery Price</h3>
+
+<select id="route">
+<option value="50">KWT → East London (R50)</option>
+<option value="50">East London → KWT (R50)</option>
+<option value="30">Local Delivery (R30)</option>
+</select>
+
+<select id="size">
+<option value="1">Small Parcel</option>
+<option value="1.5">Medium Parcel</option>
+<option value="2">Large Parcel</option>
+</select>
+
+<button onclick="calcPrice()">Calculate Price</button>
+<p class="price" id="priceResult"></p>
+</div>
+
+<!-- ADMIN -->
 <div class="card">
 <h3>Admin Login</h3>
 <input id="pass" placeholder="Password">
 <button onclick="login()">Login</button>
 
 <div id="admin" style="display:none;">
+
 <h3>Add Parcel</h3>
+
+<input id="name" placeholder="Customer Name">
+<input id="phone" placeholder="Customer Phone">
 
 <select id="status">
 <option>Pending</option>
@@ -90,6 +121,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// LOGIN
 window.login = function() {
   if(document.getElementById("pass").value === "1234"){
     document.getElementById("admin").style.display = "block";
@@ -99,16 +131,32 @@ window.login = function() {
   }
 }
 
+// PRICE CALCULATOR
+window.calcPrice = function() {
+  let route = document.getElementById("route").value;
+  let size = document.getElementById("size").value;
+
+  let price = route * size;
+
+  document.getElementById("priceResult").innerText = "Price: R" + price;
+}
+
+// GENERATE CODE
 function generateCode() {
   return "SW" + Math.floor(1000 + Math.random() * 9000);
 }
 
+// ADD PARCEL
 window.addParcel = async function() {
   let code = generateCode();
   let status = document.getElementById("status").value;
+  let name = document.getElementById("name").value;
+  let phone = document.getElementById("phone").value;
 
   await setDoc(doc(db, "parcels", code), {
     status: status,
+    name: name,
+    phone: phone,
     time: new Date().toLocaleString()
   });
 
@@ -116,6 +164,7 @@ window.addParcel = async function() {
   loadParcels();
 }
 
+// TRACK
 window.trackParcel = async function() {
   let code = document.getElementById("trackInput").value;
 
@@ -123,20 +172,22 @@ window.trackParcel = async function() {
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
+    let d = docSnap.data();
     document.getElementById("result").innerText =
-      docSnap.data().status + " (" + docSnap.data().time + ")";
+      d.status + " | " + d.name + " | " + d.phone;
   } else {
     document.getElementById("result").innerText = "Not found";
   }
 }
 
+// LOAD PARCELS
 async function loadParcels() {
   const querySnapshot = await getDocs(collection(db, "parcels"));
   let list = "";
 
   querySnapshot.forEach((docItem) => {
-    let data = docItem.data();
-    list += `<p><b>${docItem.id}</b> - ${data.status} (${data.time})</p>`;
+    let d = docItem.data();
+    list += `<p><b>${docItem.id}</b> - ${d.name} - ${d.status}</p>`;
   });
 
   document.getElementById("parcelList").innerHTML = list;
