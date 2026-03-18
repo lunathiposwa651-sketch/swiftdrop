@@ -7,35 +7,25 @@
 <style>
 body {
   font-family: Arial;
-  margin: 0;
   background: #0f172a;
   color: white;
-}
-.header {
-  padding: 20px;
-  background: #020617;
   text-align: center;
-  font-size: 22px;
 }
-.logo { color: #22c55e; }
-
 .card {
   background: #1e293b;
   margin: 15px;
   padding: 20px;
   border-radius: 15px;
 }
-
 button {
   padding: 12px;
   margin-top: 10px;
   width: 100%;
   background: #22c55e;
-  color: white;
   border: none;
   border-radius: 10px;
+  color: white;
 }
-
 input, select {
   width: 100%;
   padding: 10px;
@@ -46,127 +36,130 @@ input, select {
 
 <body>
 
-<div class="header">
-  <span class="logo">⚡ SwiftX Delivery</span>
-</div>
+<h2>⚡ SwiftX Delivery</h2>
 
-<!-- BOOKING FORM -->
+<!-- BOOKING -->
 <div class="card">
-<h3>📦 Request a Pickup</h3>
+<h3>📦 Request Pickup</h3>
+<input id="name" placeholder="Name">
+<input id="phone" placeholder="Phone">
+<input id="pickup" placeholder="Pickup">
+<input id="dropoff" placeholder="Drop-off">
 
-<input id="custName" placeholder="Your Name">
-<input id="custPhone" placeholder="Your Phone">
-<input id="pickup" placeholder="Pickup Location">
-<input id="dropoff" placeholder="Drop-off Location">
-
-<select id="parcelSize">
-<option>Small Parcel</option>
-<option>Medium Parcel</option>
-<option>Large Parcel</option>
-</select>
-
-<button onclick="sendBooking()">Request Pickup</button>
-
-<p id="bookingMsg"></p>
+<button onclick="book()">Request</button>
+<p id="msg"></p>
 </div>
 
 <!-- TRACK -->
 <div class="card">
 <h3>Track Parcel</h3>
-<input id="trackInput" placeholder="Tracking Code">
-<button onclick="trackParcel()">Track</button>
+<input id="track" placeholder="Tracking Code">
+<button onclick="track()">Track</button>
 <p id="result"></p>
 </div>
 
 <!-- ADMIN -->
 <div class="card">
-<h3>Admin Login</h3>
-<input id="pass" placeholder="Password">
-<button onclick="login()">Login</button>
+<h3>Admin</h3>
+<input id="adminPass" placeholder="Password">
+<button onclick="adminLogin()">Login</button>
 
-<div id="admin" style="display:none;">
-<h3>Bookings</h3>
-<div id="bookingList"></div>
+<div id="adminPanel" style="display:none;">
+<h4>Bookings</h4>
+<div id="adminList"></div>
+</div>
+</div>
+
+<!-- DRIVER -->
+<div class="card">
+<h3>Driver Panel</h3>
+<input id="driverPass" placeholder="Driver Code">
+<button onclick="driverLogin()">Enter</button>
+
+<div id="driverPanel" style="display:none;">
+<input id="parcelCode" placeholder="Tracking Code">
+
+<select id="driverStatus">
+<option>Collected</option>
+<option>In Transit</option>
+<option>Out for Delivery</option>
+<option>Delivered</option>
+</select>
+
+<button onclick="updateStatus()">Update Status</button>
 </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAQxGxPLT647onTJtLdMUSuRJ0l61ZF2n0",
   authDomain: "swiftdrop-a8ea5.firebaseapp.com",
-  projectId: "swiftdrop-a8ea5",
-  storageBucket: "swiftdrop-a8ea5.firebasestorage.app",
-  messagingSenderId: "333632152751",
-  appId: "1:333632152751:web:c1d8ec1d0a4ef68ba8e05a"
+  projectId: "swiftdrop-a8ea5"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// SEND BOOKING
-window.sendBooking = async function() {
-  let name = document.getElementById("custName").value;
-  let phone = document.getElementById("custPhone").value;
-  let pickup = document.getElementById("pickup").value;
-  let dropoff = document.getElementById("dropoff").value;
-  let size = document.getElementById("parcelSize").value;
+// BOOKING
+window.book = async function() {
+  let id = "SX" + Math.floor(1000 + Math.random() * 9000);
 
-  let id = "BK" + Math.floor(1000 + Math.random() * 9000);
-
-  await setDoc(doc(db, "bookings", id), {
-    name, phone, pickup, dropoff, size,
-    time: new Date().toLocaleString()
+  await setDoc(doc(db, "parcels", id), {
+    name: name.value,
+    phone: phone.value,
+    pickup: pickup.value,
+    dropoff: dropoff.value,
+    status: "Pending"
   });
 
-  document.getElementById("bookingMsg").innerText =
-    "Request sent! We will contact you soon.";
-
-  // OPEN WHATSAPP WITH DETAILS
-  let msg = `New Booking:
-Name: ${name}
-Phone: ${phone}
-Pickup: ${pickup}
-Drop-off: ${dropoff}
-Size: ${size}`;
-
-  window.open(`https://wa.me/27836153310?text=${encodeURIComponent(msg)}`);
-}
-
-// LOGIN
-window.login = function() {
-  if(document.getElementById("pass").value === "1234"){
-    document.getElementById("admin").style.display = "block";
-    loadBookings();
-  }
-}
-
-// LOAD BOOKINGS
-async function loadBookings() {
-  const querySnapshot = await getDocs(collection(db, "bookings"));
-  let list = "";
-
-  querySnapshot.forEach(docItem => {
-    let d = docItem.data();
-    list += `<p><b>${docItem.id}</b> - ${d.name} (${d.pickup} → ${d.dropoff})</p>`;
-  });
-
-  document.getElementById("bookingList").innerHTML = list;
+  msg.innerText = "Tracking Code: " + id;
 }
 
 // TRACK
-window.trackParcel = async function() {
-  let code = document.getElementById("trackInput").value;
-  const docSnap = await getDoc(doc(db, "parcels", code));
-
-  if (docSnap.exists()) {
-    let d = docSnap.data();
-    document.getElementById("result").innerText = d.status;
+window.track = async function() {
+  const docSnap = await getDoc(doc(db, "parcels", track.value));
+  if(docSnap.exists()){
+    result.innerText = docSnap.data().status;
   } else {
-    document.getElementById("result").innerText = "Not found";
+    result.innerText = "Not found";
   }
+}
+
+// ADMIN
+window.adminLogin = function() {
+  if(adminPass.value === "1234"){
+    adminPanel.style.display = "block";
+    loadAdmin();
+  }
+}
+
+async function loadAdmin(){
+  const snap = await getDocs(collection(db, "parcels"));
+  let list = "";
+  snap.forEach(docItem=>{
+    let d = docItem.data();
+    list += `<p>${docItem.id} - ${d.name} (${d.status})</p>`;
+  });
+  adminList.innerHTML = list;
+}
+
+// DRIVER
+window.driverLogin = function() {
+  if(driverPass.value === "driver"){
+    driverPanel.style.display = "block";
+  }
+}
+
+// UPDATE STATUS
+window.updateStatus = async function() {
+  await updateDoc(doc(db, "parcels", parcelCode.value), {
+    status: driverStatus.value
+  });
+
+  alert("Updated!");
 }
 </script>
 
