@@ -226,13 +226,18 @@ var marker = L.marker([-33.0153, 27.9116]).addTo(map)
   .bindPopup("Driver")
   .openPopup();
 
-setInterval(() => {
-  let lat = marker.getLatLng().lat + (Math.random() - 0.5) * 0.001;
-  let lng = marker.getLatLng().lng + (Math.random() - 0.5) * 0.001;
+<script>
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(function(position) {
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
 
-  marker.setLatLng([lat, lng]);
-  map.panTo([lat, lng]);
-}, 3000);
+    marker.setLatLng([lat, lng]);
+    map.panTo([lat, lng]);
+  });
+}
+</script>
+  
             </script>
   
 </body>
