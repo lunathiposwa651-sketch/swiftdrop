@@ -1,248 +1,153 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="manifest" href="/manifest.json">
-<title>SwiftX Delivery</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftX Delivery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-}
+  <!-- Manifest (for app install) -->
+  <link rel="manifest" href="manifest.json">
 
-/* PAGES */
-.page {
-  display: none;
-  padding: 20px;
-}
-.active {
-  display: block;
-}
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-/* NAVBAR */
-.nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: #020617;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-}
-.nav button {
-  background: none;
-  color: white;
-  border: none;
-  font-size: 14px;
-}
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* CARD */
-.card {
-  background: #1e293b;
-  padding: 15px;
-  margin: 10px 0;
-  border-radius: 12px;
-}
+    const firebaseConfig = {
+      apiKey: "YOUR_KEY",
+      authDomain: "YOUR_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+    };
 
-/* INPUT */
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-button.action {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  background: #22c55e;
-  border: none;
-  border-radius: 10px;
-  color: white;
-}
-</style>
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: #22c55e;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+
+    #map {
+      height: 300px;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- HOME -->
-<div id="home" class="page active">
-<h2>⚡ SwiftX Delivery</h2>
+<div class="container">
+  <h1>⚡ SwiftX Delivery</h1>
 
-<div class="card">
-<h3>Request Pickup</h3>
-<input id="name" placeholder="Name">
-<input id="phone" placeholder="Phone">
-<input id="pickup" placeholder="Pickup Location">
-<input id="dropoff" placeholder="Drop-off Location">
+  <h3>Request Pickup</h3>
 
-<button class="action" onclick="book()">Request</button>
-<p id="msg"></p>
-</div>
+  <input id="name" placeholder="Name">
+  <input id="phone" placeholder="Phone">
+  <input id="pickup" placeholder="Pickup Location">
+  <input id="dropoff" placeholder="Drop-off Location">
+
+  <button onclick="requestPickup()">Request</button>
 </div>
 
-<!-- TRACK -->
-<div id="trackPage" class="page">
-<h3>Track Parcel</h3>
-<input id="trackInput">
-<button class="action" onclick="trackParcel()">Track</button>
-<p id="result"></p>
-</div>
-
-<!-- ADMIN -->
-<div id="adminPage" class="page">
-<h3>Admin</h3>
-<input id="adminPass" placeholder="Password">
-<button class="action" onclick="adminLogin()">Login</button>
-
-<div id="adminPanel" style="display:none;">
-<div id="adminList"></div>
-</div>
-</div>
-
-<!-- DRIVER -->
-<div id="driverPage" class="page">
-<h3>Driver Panel</h3>
-<input id="driverPass" placeholder="Driver Code">
-<button class="action" onclick="driverLogin()">Enter</button>
-
-<div id="driverPanel" style="display:none;">
-<input id="parcelCode" placeholder="Tracking Code">
-
-<select id="status">
-<option>Collected</option>
-<option>In Transit</option>
-<option>Out for Delivery</option>
-<option>Delivered</option>
-</select>
-
-<button class="action" onclick="updateStatus()">Update</button>
-</div>
-</div>
-
-<!-- NAVIGATION -->
-<div class="nav">
-<button onclick="showPage('home')">Home</button>
-<button onclick="showPage('trackPage')">Track</button>
-<button onclick="showPage('adminPage')">Admin</button>
-<button onclick="showPage('driverPage')">Driver</button>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAQxGxPLT647onTJtLdMUSuRJ0l61ZF2n0",
-  authDomain: "swiftdrop-a8ea5.firebaseapp.com",
-  projectId: "swiftdrop-a8ea5"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// NAVIGATION
-window.showPage = function(pageId) {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(pageId).classList.add("active");
-}
-
-// BOOK
-window.book = async function() {
-  let id = "SX" + Math.floor(1000 + Math.random() * 9000);
-
-  await setDoc(doc(db, "parcels", id), {
-    name: name.value,
-    phone: phone.value,
-    pickup: pickup.value,
-    dropoff: dropoff.value,
-    status: "Pending"
-  });
-
-  msg.innerText = "Tracking Code: " + id;
-}
-
-// TRACK
-window.trackParcel = async function() {
-  const docSnap = await getDoc(doc(db, "parcels", trackInput.value));
-  result.innerText = docSnap.exists() ? docSnap.data().status : "Not found";
-}
-
-// ADMIN
-window.adminLogin = function() {
-  if(adminPass.value === "1234"){
-    adminPanel.style.display = "block";
-    loadAdmin();
-  }
-}
-
-async function loadAdmin(){
-  const snap = await getDocs(collection(db, "parcels"));
-  let list = "";
-  snap.forEach(docItem=>{
-    let d = docItem.data();
-    list += `<p>${docItem.id} - ${d.name} (${d.status})</p>`;
-  });
-  adminList.innerHTML = list;
-}
-
-// DRIVER
-window.driverLogin = function() {
-  if(driverPass.value === "driver"){
-    driverPanel.style.display = "block";
-  }
-}
-
-// UPDATE STATUS
-window.updateStatus = async function() {
-  await updateDoc(doc(db, "parcels", parcelCode.value), {
-    status: status.value
-  });
-  alert("Updated!");
-}
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
-</script>
-  <!-- MAP -->
-<div id="map" style="height:300px; margin-top:20px;"></div>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<div id="map"></div>
 
 <script>
-var map = L.map('map').setView([-33.0153, 27.9116], 13);
+  // MAP SETUP
+  var map = L.map('map').setView([-33.0153, 27.9116], 13);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
-}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-var marker = L.marker([-33.0153, 27.9116]).addTo(map)
-  .bindPopup("Driver")
-  .openPopup();
+  // DRIVER MARKER
+  var marker = L.marker([-33.0153, 27.9116])
+    .addTo(map)
+    .bindPopup("Driver")
+    .openPopup();
 
-// REAL GPS TRACKING
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(function(position) {
+  // REQUEST FUNCTION
+  async function requestPickup() {
+    let name = document.getElementById("name").value;
+    let phone = document.getElementById("phone").value;
+    let pickup = document.getElementById("pickup").value;
+    let dropoff = document.getElementById("dropoff").value;
 
-    var lat = position.coords.latitude;
-    var lng = position.coords.longitude;
-
-    // Move marker
-    marker.setLatLng([lat, lng]);
-    map.panTo([lat, lng]);
-
-    // SAVE TO FIREBASE
-    updateDoc(doc(db, "driver", "live"), {
-      lat: lat,
-      lng: lng
+    await addDoc(collection(db, "parcels"), {
+      name: name,
+      phone: phone,
+      pickup: pickup,
+      dropoff: dropoff,
+      status: "pending"
     });
 
-  });
-}
+    alert("Request Sent!");
+  }
 
+  // REAL GPS TRACKING
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(function(position) {
+
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+
+      // Move marker
+      marker.setLatLng([lat, lng]);
+      map.panTo([lat, lng]);
+
+      // SAVE TO FIREBASE
+      updateDoc(doc(db, "driver", "live"), {
+        lat: lat,
+        lng: lng
+      });
+
+    });
+  }
+</script>
+
+<!-- Service Worker -->
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+</script>
+
+</body>
+</html>
