@@ -228,6 +228,8 @@ var marker = L.marker([-33.0153, 27.9116]).addTo(map)
 
 // REAL GPS TRACKING
 if (navigator.geolocation) {
+  // REAL GPS TRACKING
+if (navigator.geolocation) {
   navigator.geolocation.watchPosition(function(position) {
 
     var lat = position.coords.latitude;
@@ -244,5 +246,4 @@ if (navigator.geolocation) {
     });
 
   });
-  }
-  
+}
