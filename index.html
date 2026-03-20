@@ -124,15 +124,16 @@
   // SHOW DRIVER TO CUSTOMER
 setInterval(async () => {
   const driverRef = doc(db, "driver", "live");
-  const driverSnap = await driverRef.get?.() || null;
+  const driverSnap = await getDoc(driverRef);
 
-  if (driverSnap && driverSnap.exists()) {
+  if (driverSnap.exists()) {
     const data = driverSnap.data();
 
     marker.setLatLng([data.lat, data.lng]);
     map.panTo([data.lat, data.lng]);
   }
 }, 3000);
+
 
 </script>
 
