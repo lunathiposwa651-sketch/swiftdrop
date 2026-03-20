@@ -121,25 +121,19 @@
     alert("Request Sent!");
   }
 
-  // REAL GPS TRACKING
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(function(position) {
+  // SHOW DRIVER TO CUSTOMER
+setInterval(async () => {
+  const driverRef = doc(db, "driver", "live");
+  const driverSnap = await driverRef.get?.() || null;
 
-      var lat = position.coords.latitude;
-      var lng = position.coords.longitude;
+  if (driverSnap && driverSnap.exists()) {
+    const data = driverSnap.data();
 
-      // Move marker
-      marker.setLatLng([lat, lng]);
-      map.panTo([lat, lng]);
-
-      // SAVE TO FIREBASE
-      updateDoc(doc(db, "driver", "live"), {
-        lat: lat,
-        lng: lng
-      });
-
-    });
+    marker.setLatLng([data.lat, data.lng]);
+    map.panTo([data.lat, data.lng]);
   }
+}, 3000);
+
 </script>
 
 <!-- Service Worker -->
