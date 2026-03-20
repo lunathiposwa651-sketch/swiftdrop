@@ -209,6 +209,31 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
 </script>
+  <!-- MAP -->
+<div id="map" style="height:300px; margin-top:20px;"></div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+var map = L.map('map').setView([-33.0153, 27.9116], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+var marker = L.marker([-33.0153, 27.9116]).addTo(map)
+  .bindPopup("Driver")
+  .openPopup();
+
+setInterval(() => {
+  let lat = marker.getLatLng().lat + (Math.random() - 0.5) * 0.001;
+  let lng = marker.getLatLng().lng + (Math.random() - 0.5) * 0.001;
+
+  marker.setLatLng([lat, lng]);
+  map.panTo([lat, lng]);
+}, 3000);
+            </script>
   
 </body>
 </html>
